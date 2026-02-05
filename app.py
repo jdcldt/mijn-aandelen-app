@@ -33,7 +33,7 @@ portfolio = {
     "ARGX.BR": { "aantal": 1, "koop_prijs": 722.50, "valuta": "EUR" },
 
     # 5. Mitsui & Co ADR (USA - Dollar)
-    "MITSY":   { "aantal": 1, "koop_prijs": 426.45, "valuta": "USD" }, # Let op: is dit bedrag in € of $? Ik reken hier als $
+    "MIO.F":   { "aantal": 1, "koop_prijs": 426.45, "valuta": "USD" }, # Let op: is dit bedrag in € of $? Ik reken hier als $
 
     # 6. iShares EMIM (Amsterdam)
     "EMIM.AS": { "aantal": 10, "koop_prijs": 35.23, "valuta": "EUR" }, # 416 / 10
@@ -136,3 +136,4 @@ try:
 
 except Exception as e:
     st.error(f"Er ging iets mis: {e}")
+

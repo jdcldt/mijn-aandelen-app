@@ -70,70 +70,120 @@ portfolio = {
 }
 
 # --- DE LOGICA (Ongewijzigd) ---
-def bereken_rendement():
-    totaal_inleg_eur = 0
-    huidige_waarde_eur = 0
+def bereken_data():
+    totaal_inleg = 0
+    totaal_waarde_nu = 0
+    totaal_waarde_jan1 = 0
     
+    # 1. Haal USD koers op (History Year-to-Date)
     try:
-        valuta_hist = yf.Ticker("EURUSD=X").history(period="5d")
-        eur_usd_koers = float(valuta_hist['Close'].dropna().iloc[-1])
+        usd_hist = yf.Ticker("EURUSD=X").history(period="ytd")['Close']
+        # Valuta nu en valuta op 1 jan (eerste handelsdag)
+        usd_koers_nu = float(usd_hist.dropna().iloc[-1])
+        usd_koers_start = float(usd_hist.dropna().iloc[0])
     except:
-        eur_usd_koers = 1.08 
+        usd_koers_nu = 1.08
+        usd_koers_start = 1.08
 
-    tickers = list(portfolio.keys())
-    if not tickers: return 0
+    # 2. Haal alle koersen op (Period = YTD voor jaarstart en nu)
+    tickers = [item[0] for item in portfolio.values()]
+    data = yf.download(tickers, period="ytd", group_by='ticker', progress=False)
     
-    raw_data = yf.download(tickers, period="5d", group_by='ticker', progress=False)
-
-    for ticker, info in portfolio.items():
+    for naam, info in portfolio.items():
+        ticker, aantal, inleg_item = info
+        
         try:
+            # Data extractie
             if len(tickers) == 1:
-                hist_data = raw_data['Close']
+                hist = data['Close']
             else:
-                hist_data = raw_data[ticker]['Close']
+                hist = data[ticker]['Close']
             
-            live_prijs = float(hist_data.dropna().iloc[-1])
+            # Schoon de data op (verwijder lege dagen)
+            clean_hist = hist.dropna()
             
-            aantal = info['aantal']
-            koop_prijs = info['koop_prijs']
-            valuta = info['valuta']
+            if clean_hist.empty:
+                continue
 
-            if valuta == "USD":
-                huidige_waarde_positie = (live_prijs * aantal) / eur_usd_koers
-                inleg_positie = (koop_prijs * aantal) / eur_usd_koers
+            prijs_nu = float(clean_hist.iloc[-1])   # Laatste koers
+            prijs_start = float(clean_hist.iloc[0]) # Eerste koers van het jaar
+            
+            # Berekening (Houd rekening met KOD in dollars)
+            if ticker == "KOD":
+                waarde_nu_item = (prijs_nu * aantal) / usd_koers_nu
+                waarde_start_item = (prijs_start * aantal) / usd_koers_start
             else:
-                huidige_waarde_positie = live_prijs * aantal
-                inleg_positie = koop_prijs * aantal
+                waarde_nu_item = prijs_nu * aantal
+                waarde_start_item = prijs_start * aantal
 
-            huidige_waarde_eur += huidige_waarde_positie
-            totaal_inleg_eur += inleg_positie
+            # Totalen optellen
+            totaal_waarde_nu += waarde_nu_item
+            totaal_waarde_jan1 += waarde_start_item
+            totaal_inleg += inleg_item
             
-        except Exception as e:
+        except:
             continue
+            
+    return totaal_waarde_nu, totaal_inleg, totaal_waarde_jan1
 
-    if totaal_inleg_eur == 0: return 0
-    return ((huidige_waarde_eur - totaal_inleg_eur) / totaal_inleg_eur) * 100
-
-# --- DASHBOARD ---
+# --- WEERGAVE ---
 try:
-    percentage = bereken_rendement()
-    kleur = "#4CAF50" if percentage >= 0 else "#FF5252"
-    teken = "+" if percentage >= 0 else ""
+    waarde_nu, inleg, waarde_jan1 = bereken_data()
     
+    # Berekening 1: Totaal Rendement (Sinds aankoop)
+    if inleg > 0:
+        rendement_totaal = ((waarde_nu - inleg) / inleg) * 100
+    else:
+        rendement_totaal = 0.0
+        
+    # Berekening 2: YTD Rendement (Sinds 1 jan)
+    if waarde_jan1 > 0:
+        rendement_ytd = ((waarde_nu - waarde_jan1) / waarde_jan1) * 100
+    else:
+        rendement_ytd = 0.0
+    
+    # Kleuren bepalen
+    kleur_totaal = "#4CAF50" if rendement_totaal >= 0 else "#FF5252"
+    teken_totaal = "+" if rendement_totaal >= 0 else ""
+    
+    kleur_ytd = "#4CAF50" if rendement_ytd >= 0 else "#FF5252"
+    teken_ytd = "+" if rendement_ytd >= 0 else ""
+    
+    # De output
     st.markdown(
         f"""
-        <div style="display: flex; justify_content: center; align_items: center; height: 80vh; flex-direction: column; font-family: sans-serif;">
-            <p style="font-size: 18px; color: gray; margin-bottom: 5px;">Portfolio Evolutie</p>
-            <h1 style="font-size: 70px; margin: 0; color: {kleur};">
-                {teken}{percentage:.2f}%
+        <div style="
+            display: flex; 
+            justify_content: center; 
+            align_items: center; 
+            height: 85vh; 
+            flex-direction: column; 
+            font-family: -apple-system, sans-serif;">
+            
+            <p style="font-size: 16px; color: gray; margin-bottom: 0px;">Totaal</p>
+            <h1 style="font-size: 80px; margin: 0; line-height: 1.1; color: {kleur_totaal};">
+                {teken_totaal}{rendement_totaal:.1f}%
             </h1>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <p style="font-size: 16px; color: gray; margin-bottom: 0px;">YTD (Dit jaar)</p>
+                <h2 style="font-size: 40px; margin: 0; color: {kleur_ytd};">
+                    {teken_ytd}{rendement_ytd:.1f}%
+                </h2>
+            </div>
+
+            <p style="font-size: 14px; color: #ccc; margin-top: 40px;">
+                Waarde: €{int(waarde_nu)}
+            </p>
         </div>
         """, 
         unsafe_allow_html=True
     )
+
     if st.button('Verversen', type="primary", use_container_width=True):
         st.rerun()
 
 except Exception as e:
-    st.error(f"Er ging iets mis: {e}")
+    st.write(f"Data wordt geladen... ({e})")
+
 

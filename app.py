@@ -42,7 +42,7 @@ def bereken_rendement():
     # 1. Haal de wisselkoers op (EUR/USD)
     # We halen op hoeveel Dollar 1 Euro waard is (bijv 1.08)
     try:
-        valuta_data = yf.Ticker("EURUSD=X").history(period="1d")['Close'].iloc[-1]
+        valuta_data = yf.Ticker("EURUSD=X").history(period="5d")['Close'].iloc[-1]
         eur_usd_koers = float(valuta_data)
     except:
         eur_usd_koers = 1.08 # Fallback als yahoo faalt
@@ -50,7 +50,7 @@ def bereken_rendement():
     # 2. Haal aandelenkoersen op
     tickers = list(portfolio.keys())
     # We downloaden alles in één keer voor snelheid
-    data = yf.download(tickers, period="1d", progress=False)['Close']
+    data = yf.download(tickers, period="5d", progress=False)['Close']
 
     for ticker, info in portfolio.items():
         # Huidige prijs ophalen uit de download
@@ -116,4 +116,5 @@ try:
         st.rerun()
 
 except Exception as e:
+
     st.error(f"Foutmelding: {e}")

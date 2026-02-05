@@ -17,7 +17,7 @@ st.markdown(hide_st_style, unsafe_allow_html=True)
 # --- JOUW PORTFOLIO ---
 # Vul hier in: Ticker, Aantal, Gemiddelde aankoopprijs (in de valuta van het aandeel!), Valuta
 portfolio = {
-    "VWRL.AS": {
+    "ASML.AS": {
         "aantal": 50, 
         "koop_prijs": 94.50, 
         "valuta": "EUR"
@@ -118,3 +118,4 @@ try:
 except Exception as e:
 
     st.error(f"Foutmelding: {e}")
+

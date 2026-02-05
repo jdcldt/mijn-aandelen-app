@@ -14,78 +14,52 @@ hide_st_style = """
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-# --- JOUW PORTFOLIO ---
-# Ik heb de tickers opgezocht en de prijs per aandeel berekend (Waarde / Aantal)
-# CONTROLEER: Is 'koop_prijs' wat je BETAALD hebt? Of de huidige waarde?
-# Pas aan indien nodig.
-
+# --- PORTFOLIO (GEBASEERD OP JOUW SPREADSHEET) ---
+# Structuur: "Naam": ["TICKER", Aantal, Totale_Inleg_In_Oorspronkelijke_Valuta]
 portfolio = {
-    # 1. ASML Holding (Amsterdam)
-    "ASML.AS": { "aantal": 1, "koop_prijs": 691.18, "valuta": "EUR" },
-
-    # 2. Vanguard FTSE All-World (VWCE - Xetra Duitsland is meest gebruikt voor data)
-    "VWCE.DE": { "aantal": 5, "koop_prijs": 142.50, "valuta": "EUR" }, # 738 / 5
-
-    # 3. Elia Group (Brussel)
-    "ELI.BR":  { "aantal": 6, "koop_prijs": 86.12, "valuta": "EUR" }, # 726 / 6
-
-    # 4. Argenx (Brussel)
-    "ARGX.BR": { "aantal": 1, "koop_prijs": 722.50, "valuta": "EUR" },
-
-    # 5. Mitsui & Co ADR (USA - Dollar)
-    "MIO.F":   { "aantal": 1, "koop_prijs": 426.45, "valuta": "USD" }, # Let op: is dit bedrag in € of $? Ik reken hier als $
-
-    # 6. iShares EMIM (Amsterdam)
-    "EMIM.AS": { "aantal": 10, "koop_prijs": 35.23, "valuta": "EUR" }, # 416 / 10
-
-    # 7. D'Ieteren (Brussel)
-    "DIE.BR":  { "aantal": 2, "koop_prijs": 158.65, "valuta": "EUR" }, # 390 / 2
-
-    # 8. Denison Mines (USA - Dollar)
-    "DNN":     { "aantal": 100, "koop_prijs": 3.35, "valuta": "USD" }, # 360 totaal. Prijs per stuk $3.60? 
-
-    # 9. Novo Nordisk (Gebruik Duitse ticker in EUR voor gemak)
-    "NOVA.DE": { "aantal": 7, "koop_prijs": 56.59, "valuta": "EUR" }, # 352 / 7
-
-    # 10. GBL (Brussel)
-    "GBLB.BR": { "aantal": 4, "koop_prijs": 72.57, "valuta": "EUR" }, # 319 / 4
-
-    # 11. Alphabet / Google (USA - Dollar)
-    "GOOGL":   { "aantal": 1, "koop_prijs": 335.54, "valuta": "USD" }, # Als je tabelwaarde €281 was, pas dit dan aan naar de Dollar prijs!
-
-    # 12. BNP Paribas (Parijs)
-    "BNP.PA":  { "aantal": 3, "koop_prijs": 81.43, "valuta": "EUR" }, # 272 / 3
-
-    # 13. Gimv (Brussel)
-    "GIMB.BR": { "aantal": 5, "koop_prijs": 43.65, "valuta": "EUR" }, # 230 / 5
-    
-    # 14. Kodiak Robotics (Waarschuwing: Is dit Kodiak Sciences? Robotics is vaak niet beursgenoteerd)
-    "KDK":     { "aantal": 20, "koop_prijs": 9.42, "valuta": "USD" }, # 159 / 20
-
-    # 15. CSG N.V. (Lastig te vinden, ik gok op CSG Systems of lokaal)
-    "CSG.AS":  { "aantal": 3, "koop_prijs": 35.45, "valuta": "EUR" }, 
-
-    # 16. WisdomTree Strategic Metals ETF
-    "WENH.DE":  { "aantal": 20, "koop_prijs": 14.26, "valuta": "EUR" }, 
+    "Argenx":         ["ARGX.BR", 1,   722.50],  # EUR
+    "ASML":           ["ASML.AS", 1,   691.18],  # EUR
+    "BNP Paribas":    ["BNP.PA",  3,   244.30],  # EUR (3 * 81.43)
+    "CSG N.V.":       ["CSG.AS",  3,   106.36],  # EUR (3 * 35.45)
+    "D'Ieteren":      ["DIE.BR",  2,   317.29],  # EUR (2 * 158.64)
+    "Elia Group":     ["ELI.BR",  6,   516.73],  # EUR (6 * 86.12)
+    "Gimv":           ["GIMB.BR", 5,   218.25],  # EUR (5 * 43.65)
+    "GBL":            ["GBLB.BR", 4,   290.29],  # EUR (4 * 72.57)
+    "Novo Nordisk":   ["NOVO-B.CO", 7, 2957.76], # DKK (Totale inleg in Kronen)
+    "Alphabet":       ["GOOGL",   1,   335.54],  # USD
+    "Denison Mines":  ["DNN",     100, 335.01],  # USD (100 * 3.35)
+    "Kodiak Robotics":["KDK",     20,  188.35],  # USD (20 * 9.41)
+    "Mitsui & Co":    ["MITSY",   1,   426.45],  # USD
+    "iShares EMIM":   ["EMIM.AS", 10,  352.34],  # EUR (10 * 35.23)
+    "Vanguard VWCE":  ["VWCE.DE", 5,   712.52],  # EUR (5 * 142.50)
+    "WisdomTree Met": ["WENH.DE", 20,  285.10],  # EUR (20 * 14.25)
 }
 
-# --- DE LOGICA (Ongewijzigd) ---
 def bereken_data():
     totaal_inleg = 0
     totaal_waarde_nu = 0
     totaal_waarde_jan1 = 0
     
-    # 1. Haal USD koers op (History Year-to-Date)
+    # 1. Haal Valuta Koersen op (USD en DKK)
+    # We halen op hoeveel de vreemde munt waard is in Euro (koers inverse van EURUSD=X)
+    # EURUSD=X betekent: 1 Euro = 1.08 USD. Dus delen we door deze koers.
     try:
         usd_hist = yf.Ticker("EURUSD=X").history(period="ytd")['Close']
-        # Valuta nu en valuta op 1 jan (eerste handelsdag)
         usd_koers_nu = float(usd_hist.dropna().iloc[-1])
         usd_koers_start = float(usd_hist.dropna().iloc[0])
     except:
         usd_koers_nu = 1.08
         usd_koers_start = 1.08
 
-    # 2. Haal alle koersen op (Period = YTD voor jaarstart en nu)
+    try:
+        dkk_hist = yf.Ticker("EURDKK=X").history(period="ytd")['Close']
+        dkk_koers_nu = float(dkk_hist.dropna().iloc[-1])
+        dkk_koers_start = float(dkk_hist.dropna().iloc[0])
+    except:
+        dkk_koers_nu = 7.46
+        dkk_koers_start = 7.46
+
+    # 2. Haal alle koersen op
     tickers = [item[0] for item in portfolio.values()]
     data = yf.download(tickers, period="ytd", group_by='ticker', progress=False)
     
@@ -99,27 +73,35 @@ def bereken_data():
             else:
                 hist = data[ticker]['Close']
             
-            # Schoon de data op (verwijder lege dagen)
             clean_hist = hist.dropna()
-            
-            if clean_hist.empty:
-                continue
+            if clean_hist.empty: continue
 
-            prijs_nu = float(clean_hist.iloc[-1])   # Laatste koers
-            prijs_start = float(clean_hist.iloc[0]) # Eerste koers van het jaar
+            prijs_nu = float(clean_hist.iloc[-1])
+            prijs_start = float(clean_hist.iloc[0])
             
-            # Berekening (Houd rekening met KOD in dollars)
-            if ticker == "KOD":
-                waarde_nu_item = (prijs_nu * aantal) / usd_koers_nu
-                waarde_start_item = (prijs_start * aantal) / usd_koers_start
-            else:
-                waarde_nu_item = prijs_nu * aantal
-                waarde_start_item = prijs_start * aantal
+            # --- VALUTA CONVERSIE ---
+            # Bepaal de wisselkoers op basis van de ticker/munt
+            if ticker == "NOVO-B.CO": # Deense Kroon
+                koers_nu = dkk_koers_nu
+                koers_start = dkk_koers_start
+            elif ticker in ["GOOGL", "DNN", "KDK", "MITSY"]: # US Dollar
+                koers_nu = usd_koers_nu
+                koers_start = usd_koers_start
+            else: # Euro (Geen conversie nodig, deler is 1)
+                koers_nu = 1.0
+                koers_start = 1.0
 
-            # Totalen optellen
+            # Berekening in Euro's (Waarde / Wisselkoers)
+            waarde_nu_item = (prijs_nu * aantal) / koers_nu
+            waarde_start_item = (prijs_start * aantal) / koers_start
+            
+            # De inleg is vast in de oorspronkelijke valuta, dus die rekenen we om met de HUIDIGE koers
+            # (Of je historische koers wilt gebruiken is een keuze, hier gebruiken we actuele waarde vs actuele inleg-waarde)
+            inleg_item_eur = inleg_item / koers_nu
+
             totaal_waarde_nu += waarde_nu_item
             totaal_waarde_jan1 += waarde_start_item
-            totaal_inleg += inleg_item
+            totaal_inleg += inleg_item_eur
             
         except:
             continue
@@ -130,26 +112,24 @@ def bereken_data():
 try:
     waarde_nu, inleg, waarde_jan1 = bereken_data()
     
-    # Berekening 1: Totaal Rendement (Sinds aankoop)
+    # Rendement Totaal
     if inleg > 0:
         rendement_totaal = ((waarde_nu - inleg) / inleg) * 100
     else:
         rendement_totaal = 0.0
         
-    # Berekening 2: YTD Rendement (Sinds 1 jan)
+    # Rendement YTD
     if waarde_jan1 > 0:
         rendement_ytd = ((waarde_nu - waarde_jan1) / waarde_jan1) * 100
     else:
         rendement_ytd = 0.0
     
-    # Kleuren bepalen
     kleur_totaal = "#4CAF50" if rendement_totaal >= 0 else "#FF5252"
     teken_totaal = "+" if rendement_totaal >= 0 else ""
     
     kleur_ytd = "#4CAF50" if rendement_ytd >= 0 else "#FF5252"
     teken_ytd = "+" if rendement_ytd >= 0 else ""
     
-    # De output
     st.markdown(
         f"""
         <div style="
@@ -160,20 +140,20 @@ try:
             flex-direction: column; 
             font-family: -apple-system, sans-serif;">
             
-            <p style="font-size: 16px; color: gray; margin-bottom: 0px;">Totaal</p>
+            <p style="font-size: 16px; color: gray; margin-bottom: 0px;">Totaal Rendement</p>
             <h1 style="font-size: 80px; margin: 0; line-height: 1.1; color: {kleur_totaal};">
                 {teken_totaal}{rendement_totaal:.1f}%
             </h1>
             
-            <div style="margin-top: 20px; text-align: center;">
-                <p style="font-size: 16px; color: gray; margin-bottom: 0px;">YTD (Dit jaar)</p>
+            <div style="margin-top: 30px; text-align: center;">
+                <p style="font-size: 16px; color: gray; margin-bottom: 0px;">YTD (2026)</p>
                 <h2 style="font-size: 40px; margin: 0; color: {kleur_ytd};">
                     {teken_ytd}{rendement_ytd:.1f}%
                 </h2>
             </div>
 
             <p style="font-size: 14px; color: #ccc; margin-top: 40px;">
-                Waarde: €{int(waarde_nu)}
+                Waarde: €{int(waarde_nu):,}
             </p>
         </div>
         """, 
@@ -184,6 +164,4 @@ try:
         st.rerun()
 
 except Exception as e:
-    st.write(f"Data wordt geladen... ({e})")
-
-
+    st.write(f"Bezig met laden... ({e})")

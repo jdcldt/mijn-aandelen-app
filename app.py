@@ -13,60 +13,100 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- PORTFOLIO ---
-# Nieuw formaat: "Naam": ["TICKER", Aantal, Inleg, "AANKOOPDATUM (YYYY-MM-DD)"]
-# Als je de exacte datum niet weet, gok dan. 
-# Zolang de datum maar VOOR 2026 ligt, berekent hij de YTD correct vanaf 1 jan.
+# --- PORTFOLIO (VOLLEDIG GEBASEERD OP JE CSV) ---
+# Novo Nordisk en ASML zijn nu beide correct opgenomen met hun datums uit 2025.
 
-portfolio = {
-    "Argenx":          ["ARGX.BR", 1,   722.50,  "2024-05-10"],
-    "ASML":            ["ASML.AS", 1,   691.18,  "2023-11-15"],
-    "BNP Paribas":     ["BNP.PA",  3,   244.30,  "2024-01-01"],
-    "CSG N.V.":        ["CSG.AS",  3,   106.36,  "2026-01-28"],
-    "D'Ieteren":       ["DIE.BR",  2,   317.29,  "2026-01-12"],
-    "Elia Group":      ["ELI.BR",  6,   516.73,  "2023-01-01"],
-    "Gimv":            ["GIMB.BR", 5,   218.25,  "2022-01-01"],
-    "GBL":             ["GBLB.BR", 4,   290.29,  "2024-01-01"],
-    "Novo Nordisk":    ["NOVO-B.CO", 7, 2957.76, "2023-08-20"], 
-    "Alphabet":        ["GOOGL",   1,   335.54,  "2026-01-12"],
-    "Denison Mines":   ["DNN",     100, 335.01,  "2026-01-08"],
-    "Kodiak Robotics": ["KDK",     20,  188.35,  "2026-01-26"], # Voorbeeld: Stel dat je deze recent kocht?
-    "Mitsui & Co":     ["MITSY",   1,   426.45,  "2024-01-01"],
-    "iShares EMIM":    ["EMIM.AS", 10,  352.34,  "2024-01-01"],
-    "Vanguard VWCE":   ["VWCE.DE", 5,   712.52,  "2023-01-01"],
-    "WisdomTree Met":  ["WENH.DE", 20,  285.10,  "2026-02-09"],
-}
+portfolio = [
+    # 1. Broadcom - 09-02-2026
+    {"naam": "Broadcom", "ticker": "AVGO", "aantal": 1, "inleg": 342.76, "datum": "2026-02-09"}, # USD
+
+    # 2. WisdomTree Metals - 02-02-2026
+    {"naam": "WisdomTree Met", "ticker": "WENH.DE", "aantal": 20, "inleg": 290.20, "datum": "2026-02-02"}, 
+
+    # 3. Vanguard VWCE (Deel 1) - 28-01-2026
+    {"naam": "Vanguard VWCE", "ticker": "VWCE.DE", "aantal": 2, "inleg": 299.20, "datum": "2026-01-28"},
+
+    # 4. Kodiak Robotics - 23-01-2026
+    {"naam": "Kodiak Robotics", "ticker": "KDK", "aantal": 20, "inleg": 172.40, "datum": "2026-01-23"}, # USD
+
+    # 5. Alphabet (Google) - 09-01-2026
+    {"naam": "Alphabet", "ticker": "GOOGL", "aantal": 1, "inleg": 310.96, "datum": "2026-01-09"}, # USD
+
+    # 6. D'Ieteren - 07-01-2026
+    {"naam": "D'Ieteren", "ticker": "DIE.BR", "aantal": 2, "inleg": 398.00, "datum": "2026-01-07"},
+
+    # 7. Denison Mines - 07-01-2026
+    {"naam": "Denison Mines", "ticker": "DNN", "aantal": 100, "inleg": 396.00, "datum": "2026-01-07"}, # USD
+
+    # 8. Argenx - 04-01-2026
+    {"naam": "Argenx", "ticker": "ARGX.BR", "aantal": 1, "inleg": 706.60, "datum": "2026-01-04"},
+
+    # 9. ASML Holding - 27-10-2025
+    {"naam": "ASML", "ticker": "ASML.AS", "aantal": 1, "inleg": 691.18, "datum": "2025-10-27"},
+
+    # 10. BNP Paribas - 27-07-2025
+    {"naam": "BNP Paribas", "ticker": "BNP.PA", "aantal": 3, "inleg": 281.85, "datum": "2025-07-27"},
+
+    # 11. Gimv - 24-07-2025
+    {"naam": "Gimv", "ticker": "GIMB.BR", "aantal": 5, "inleg": 224.75, "datum": "2025-07-24"},
+
+    # 12. iShares EMIM - 24-07-2025
+    {"naam": "iShares EMIM", "ticker": "EMIM.AS", "aantal": 10, "inleg": 426.52, "datum": "2025-07-24"},
+
+    # 13. Vanguard VWCE (Deel 2) - 22-07-2025
+    {"naam": "Vanguard VWCE", "ticker": "VWCE.DE", "aantal": 3, "inleg": 448.80, "datum": "2025-07-22"},
+
+    # 14. Elia Group (Deel 1) - 21-07-2025
+    {"naam": "Elia Group", "ticker": "ELI.BR", "aantal": 1, "inleg": 126.90, "datum": "2025-07-21"},
+
+    # 15. Novo Nordisk - 17-06-2025 (GEVONDEN: 7 stuks à 824,40 DKK)
+    # Totaal inleg: 7 * 824.40 = 5770.80 DKK
+    {"naam": "Novo Nordisk", "ticker": "NOVO-B.CO", "aantal": 7, "inleg": 5770.80, "datum": "2025-06-17"}, # DKK
+
+    # 16. Mitsui & Co - 22-05-2025
+    {"naam": "Mitsui & Co", "ticker": "MITSY", "aantal": 1, "inleg": 725.00, "datum": "2025-05-22"}, # USD
+
+    # 17. GBL - 10-05-2025
+    {"naam": "GBL", "ticker": "GBLB.BR", "aantal": 4, "inleg": 333.20, "datum": "2025-05-10"},
+
+    # 18. Elia Group (Deel 2) - 15-11-2024 (Schatting o.b.v. 'oud bezit')
+    {"naam": "Elia Group", "ticker": "ELI.BR", "aantal": 4, "inleg": 508.00, "datum": "2024-11-15"},
+
+    # 19. Elia Group (Deel 3) - 01-01-2023 (Oud bezit)
+    {"naam": "Elia Group", "ticker": "ELI.BR", "aantal": 1, "inleg": 86.00,  "datum": "2023-01-01"},
+]
 
 def haal_data_op():
     totaal_inleg_eur = 0
     totaal_waarde_eur = 0
     totaal_waarde_ytd_start = 0
     
-    # Huidig jaar bepalen voor de logica
     huidig_jaar = datetime.now().year
     
     # 1. Valuta ophalen
     try:
         valuta_data = yf.download(["EURUSD=X", "EURDKK=X"], period="ytd", progress=False)['Close']
-        
         usd_nu = float(valuta_data["EURUSD=X"].dropna().iloc[-1])
         dkk_nu = float(valuta_data["EURDKK=X"].dropna().iloc[-1])
-        
         usd_start = float(valuta_data["EURUSD=X"].dropna().iloc[0])
         dkk_start = float(valuta_data["EURDKK=X"].dropna().iloc[0])
     except:
         usd_nu, usd_start = 1.08, 1.08
         dkk_nu, dkk_start = 7.46, 7.46
 
-    # 2. Aandelen ophalen
-    tickers = [item[0] for item in portfolio.values()]
-    data = yf.download(tickers, period="ytd", group_by='ticker', progress=False)
+    # 2. Unieke tickers downloaden
+    unieke_tickers = list(set([item["ticker"] for item in portfolio]))
+    data = yf.download(unieke_tickers, period="ytd", group_by='ticker', progress=False)
     
-    for naam, info in portfolio.items():
-        ticker, aantal, inleg_orig, datum_str = info
+    # 3. Loop door alle transacties
+    for transactie in portfolio:
+        ticker = transactie["ticker"]
+        aantal = transactie["aantal"]
+        inleg_orig = transactie["inleg"]
+        datum_str = transactie["datum"]
         
         try:
-            if len(tickers) == 1:
+            if len(unieke_tickers) == 1:
                 hist = data['Close']
             else:
                 hist = data[ticker]['Close']
@@ -77,34 +117,29 @@ def haal_data_op():
             prijs_nu = float(clean_hist.iloc[-1])
             prijs_start_jaar = float(clean_hist.iloc[0])
             
-            # --- Valuta Bepalen ---
+            # Valuta bepalen
             if ticker == "NOVO-B.CO":
                 koers_nu = dkk_nu
                 koers_start = dkk_start
-            elif ticker in ["GOOGL", "DNN", "KDK", "MITSY"]:
+            elif ticker in ["GOOGL", "DNN", "KDK", "MITSY", "AVGO"]:
                 koers_nu = usd_nu
                 koers_start = usd_start
             else:
                 koers_nu = 1.0
                 koers_start = 1.0
             
-            # --- Huidige Waarde & Inleg ---
+            # Waarde & Inleg
             waarde_nu_eur = (prijs_nu * aantal) / koers_nu
             inleg_eur = inleg_orig / koers_nu
             
-            # --- YTD Logica (De Perfectie) ---
-            # We kijken naar het aankoopjaar.
+            # YTD Logica
             datum_aankoop = datetime.strptime(datum_str, "%Y-%m-%d")
             
             if datum_aankoop.year == huidig_jaar:
-                # Als je het DIT jaar kocht, is je "startwaarde" voor YTD gelijk aan wat je betaalde.
-                # Want op 1 januari had je het nog niet.
                 waarde_start_eur_item = inleg_eur 
             else:
-                # Als je het vorig jaar al had, is de startwaarde de koers op 1 januari.
                 waarde_start_eur_item = (prijs_start_jaar * aantal) / koers_start
 
-            # Totalen
             totaal_waarde_eur += waarde_nu_eur
             totaal_inleg_eur += inleg_eur
             totaal_waarde_ytd_start += waarde_start_eur_item
@@ -120,7 +155,7 @@ try:
     
     waarde_nu, inleg, waarde_ytd_start = haal_data_op()
     
-    # 1. Totaal Rendement (Huidig vs Inleg)
+    # 1. Totaal Rendement
     if inleg > 0:
         rendement_totaal = ((waarde_nu - inleg) / inleg) * 100
         delta_totaal = waarde_nu - inleg
@@ -128,7 +163,7 @@ try:
         rendement_totaal = 0
         delta_totaal = 0
 
-    # 2. YTD Rendement (Huidig vs Startwaarde Jaar OF Aankoopwaarde)
+    # 2. YTD Rendement
     if waarde_ytd_start > 0:
         rendement_ytd = ((waarde_nu - waarde_ytd_start) / waarde_ytd_start) * 100
         delta_ytd = waarde_nu - waarde_ytd_start
